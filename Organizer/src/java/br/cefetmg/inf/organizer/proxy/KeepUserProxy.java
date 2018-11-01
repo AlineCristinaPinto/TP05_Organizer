@@ -15,7 +15,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class KeepUserProxy implements IKeepUser {
+    
     private IKeepUserRemote keepUserRemote;
+    
     public KeepUserProxy() throws SocketException, UnknownHostException, RemoteException, NotBoundException {
         keepUserRemote = (IKeepUserRemote) RMIClient.lookup(StubList.KeepUserAdapter.name());
     }

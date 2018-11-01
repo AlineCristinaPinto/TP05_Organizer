@@ -15,7 +15,7 @@ public class RMIServer {
         }
         
         System.out.println("Segurança OK!");
-
+       
         StubBuilder stubBuilder;
         try {
             stubBuilder = StubBuilder.getInstance();

@@ -10,30 +10,32 @@ import java.rmi.registry.Registry;
 public class RegistryManager {
 
     private static RegistryManager onlyInstance;
-    private final String serverName;
-    private final int port;
-    private final Registry registry;
+    private static String serverName;
+    private static int port;
+    private Registry registry;
     
     private RegistryManager() throws RemoteException{
-        onlyInstance = new RegistryManager();
         serverName = "localhost";
-        port = 2345;
-        registry = LocateRegistry.createRegistry(port);
+        port = 52365;
+        registry = null;
     }
     
     public static RegistryManager getInstance() throws RemoteException{
         if(onlyInstance == null){
             onlyInstance = new RegistryManager();
         }
-        
         return onlyInstance;
     }
     
-    public Registry getRegistry() throws RemoteException {
+    public static Registry getRegistry() throws RemoteException {
         return LocateRegistry.getRegistry(serverName, port);
     }
     
     public void rebind(String name, Remote obj) throws RemoteException{
         registry.rebind(name, obj);
+    }
+    
+    public void createRegistry() throws RemoteException{
+        registry = LocateRegistry.createRegistry(port);
     }
 }
