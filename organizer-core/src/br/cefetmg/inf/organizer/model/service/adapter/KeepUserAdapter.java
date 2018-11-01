@@ -2,9 +2,7 @@
 package br.cefetmg.inf.organizer.model.service.adapter;
 
 
-import br.cefetmg.inf.organizer.model.domain.Tag;
 import br.cefetmg.inf.organizer.model.domain.User;
-import br.cefetmg.inf.organizer.model.service.IKeepTag;
 import br.cefetmg.inf.organizer.model.service.IKeepUser;
 import br.cefetmg.inf.organizer.model.service.impl.KeepUser;
 import br.cefetmg.inf.organizer.model.service.remote.IKeepUserRemote;
@@ -15,7 +13,7 @@ import java.rmi.RemoteException;
 
 public class KeepUserAdapter implements IKeepUserRemote {
 
-    private IKeepUser keepUser;
+    private final IKeepUser keepUser;
 
     public KeepUserAdapter() {
         this.keepUser = new KeepUser();

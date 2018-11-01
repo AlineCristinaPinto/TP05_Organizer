@@ -12,26 +12,27 @@ public class StubBuilder {
     
     private static StubBuilder stubBuilder;
     private RegistryManager registryManager;
-    private final String classPackage = "br.cefetmg.inf.organizer.service.adapter.";
+    private final String classPackage = "br.cefetmg.inf.organizer.model.service.adapter.";
     private List<String> stubNames;
     
    
     private StubBuilder() throws RemoteException{
         registryManager = RegistryManager.getInstance();
+        registryManager.createRegistry();
+        
         stubNames = new ArrayList<>();
         
-        Class stubList = StubList.class;
+        StubList stubList[] = StubList.values();
         
-        Field [] stubListNames = stubList.getDeclaredFields();
         
-        for(Field field : stubListNames){
-            stubNames.add(field.getName());
+        for(StubList field : stubList){
+            stubNames.add(field.name());
         }
 
     }
 
     public static StubBuilder getInstance() throws RemoteException{
-        if(stubBuilder!=null){
+        if(stubBuilder==null){
             stubBuilder = new StubBuilder();
         }
         
