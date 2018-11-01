@@ -1,140 +1,80 @@
 package br.cefetmg.inf.organizer.proxy;
 
-import br.cefetmg.inf.organizer.dist.ClientDistribution;
-import br.cefetmg.inf.organizer.model.domain.Item;
+import br.cefetmg.inf.organizer.dist.RMIClient;
+import br.cefetmg.inf.organizer.dist.StubList;
 import br.cefetmg.inf.organizer.model.domain.ItemTag;
 import br.cefetmg.inf.organizer.model.domain.Tag;
 import br.cefetmg.inf.organizer.model.service.IKeepItemTag;
-import br.cefetmg.inf.util.PseudoPackage;
-import br.cefetmg.inf.util.RequestType;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Type;
+import br.cefetmg.inf.organizer.model.service.remote.IKeepItemTagRemote;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class KeepItemTagProxy implements IKeepItemTag{
     
-    private ClientDistribution client;
-
-    public KeepItemTagProxy() throws SocketException, UnknownHostException {
-        client = ClientDistribution.getInstance();
+    private IKeepItemTagRemote keepItemTagRemote;
+    
+    public KeepItemTagProxy() throws SocketException, UnknownHostException, RemoteException, NotBoundException {
+        keepItemTagRemote = (IKeepItemTagRemote) RMIClient.lookup(StubList.KeepItemTagAdapter.name());
     }
 
     @Override
     public boolean createTagInItem(ItemTag itemTag) {
         
-        PseudoPackage contentPackage;
-        Gson json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(itemTag));
-        
-        RequestType requestType = RequestType.CREATETAGINITEM;        
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        boolean success = false;
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            return Boolean.valueOf(receivedPackage.getContent().get(0));
-           
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            success = keepItemTagRemote.createTagInItem(itemTag);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
     
-        return false;
+        return success;
     }
 
     @Override
     public boolean deleteTagInItem(ArrayList<Tag> itemTag, Long id) {
         
-        PseudoPackage contentPackage;
-        Gson json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(itemTag));
-        jsonContent.add(json.toJson(id));
-        
-        RequestType requestType = RequestType.DELETETAGINITEM;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        boolean success = false;
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            return Boolean.valueOf(receivedPackage.getContent().get(0));
-           
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            success = keepItemTagRemote.deleteTagInItem(itemTag, id);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        return false;
+    
+        return success;
     }
 
     @Override
     public ArrayList<Tag> listAllTagInItem(Long seqItem) {
         
-        PseudoPackage contentPackage;
-        JsonReader reader;
-        Gson json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(seqItem));
-        
-        RequestType requestType = RequestType.LISTALLTAGINITEM;
-        
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        ArrayList<Tag> listAllTag = new ArrayList();
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-           
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                Type type = new TypeToken<ArrayList<Tag>>() {}.getType();
-                return json.fromJson(reader, type);
-            }
-            
-             
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            listAllTag = keepItemTagRemote.listAllTagInItem(seqItem);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
     
-        return new ArrayList();
+        return listAllTag;
     }
 
     @Override
     public boolean deleteTagByItemId(Long idItem) {
        
-        PseudoPackage contentPackage;
-        Gson json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(idItem));
-        
-        RequestType requestType = RequestType.DELETETAGBYITEMID;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        boolean success = false;
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            return Boolean.valueOf(receivedPackage.getContent().get(0));
-           
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            success = keepItemTagRemote.deleteTagByItemId(idItem);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
     
-        return false;
+        return success;
     }    
 }

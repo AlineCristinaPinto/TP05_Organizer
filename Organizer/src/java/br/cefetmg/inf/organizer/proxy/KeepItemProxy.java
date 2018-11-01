@@ -1,22 +1,17 @@
 package br.cefetmg.inf.organizer.proxy;
 
-import br.cefetmg.inf.organizer.dist.ClientDistribution;
+import br.cefetmg.inf.organizer.dist.RMIClient;
+import br.cefetmg.inf.organizer.dist.StubList;
 import br.cefetmg.inf.organizer.model.domain.Item;
 import br.cefetmg.inf.organizer.model.domain.Tag;
 import br.cefetmg.inf.organizer.model.domain.User;
 import br.cefetmg.inf.organizer.model.service.IKeepItem;
-import br.cefetmg.inf.util.PseudoPackage;
-import br.cefetmg.inf.util.RequestType;
+import br.cefetmg.inf.organizer.model.service.remote.IKeepItemRemote;
 import br.cefetmg.inf.util.exception.PersistenceException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Type;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -24,189 +19,106 @@ import java.util.logging.Logger;
 
 
 public class KeepItemProxy implements IKeepItem {
-    /*
-    private ClientDistribution client;
+    
+    private IKeepItemRemote keepItemRemote;
 
-    public KeepItemProxy() throws SocketException, UnknownHostException {
-        client = ClientDistribution.getInstance();
+    public KeepItemProxy() throws SocketException, UnknownHostException, RemoteException, NotBoundException {
+        keepItemRemote = (IKeepItemRemote) RMIClient.lookup(StubList.KeepItemAdapter.name());
     }
 
     @Override
     public boolean createItem(Item item) throws PersistenceException {
-    
-        PseudoPackage contentPackage;
-        Gson json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
         
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(item));
-        
-        RequestType requestType = RequestType.CREATEITEM;
-        contentPackage = new PseudoPackage(requestType, jsonContent); 
+        boolean success = false;
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            return Boolean.valueOf(receivedPackage.getContent().get(0));
-           
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            success = keepItemRemote.createItem(item);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        return false;
+    
+        return success;
+    
     }
 
     @Override
     public boolean updateItem(Item item) throws PersistenceException {
         
-        PseudoPackage contentPackage;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(item));
-        
-        RequestType requestType = RequestType.UPDATEITEM;
-        contentPackage = new PseudoPackage(requestType, jsonContent); 
+        boolean success = false;
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            return Boolean.valueOf(receivedPackage.getContent().get(0));
-           
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            success = keepItemRemote.updateItem(item);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        return false;
+    
+        return success;
+       
     }
 
     @Override
     public boolean deleteItem(Long idItem, User user) throws PersistenceException {
         
-        PseudoPackage contentPackage;
-        Gson json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(idItem));
-        jsonContent.add(json.toJson(user));
-        
-        RequestType requestType = RequestType.DELETEITEM;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+       boolean success = false;
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            return Boolean.valueOf(receivedPackage.getContent().get(0));
-           
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            success = keepItemRemote.deleteItem(idItem, user);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
     
-        return false;
+        return success;
+        
     }
 
     @Override
     public ArrayList<Item> listAllItem(User user) throws PersistenceException {
         
-        PseudoPackage contentPackage;
-        JsonReader reader;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(user));
-       
-        RequestType requestType = RequestType.LISTALLITEM;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        ArrayList<Item> listAllItem = new ArrayList();
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-            
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                Type type = new TypeToken<ArrayList<Item>>() {}.getType();
-                return json.fromJson(reader, type);
-            }
-            
-            
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            listAllItem = keepItemRemote.listAllItem(user);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        return null;
+        return listAllItem;
+        
     }
-
+    
     @Override
     public Item searchItemById(Long idItem) throws PersistenceException {
         
-        PseudoPackage contentPackage;
-        JsonReader reader;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(idItem));
-        
-        RequestType requestType = RequestType.SEARCHITEMBYID;
-        
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        Item itemSearched = new Item();
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-            
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                return json.fromJson(reader, Item.class);
-            }
-
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            itemSearched = keepItemRemote.searchItemById(idItem);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-    
-        return null;
+        
+        return itemSearched;
+        
     }
 
     @Override
     public Item searchItemByName(String nomeItem) throws PersistenceException {
         
-        PseudoPackage contentPackage;
-        JsonReader reader;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-        
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(nomeItem);
-        
-        RequestType requestType = RequestType.SEARCHITEMBYNAME;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
+        Item itemSearched = new Item();
         
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-            
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                return json.fromJson(reader, Item.class);
-            }
-            
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            itemSearched = keepItemRemote.searchItemByName(nomeItem);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemTagProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        return null;
+        return itemSearched;
+        
     }
-
+    
     @Override
     public ArrayList<Item> searchItemByTag(List<Tag> tagList, User user) throws PersistenceException {
-        PseudoPackage contentPackage;
+    /*    PseudoPackage contentPackage;
         Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
         
         ArrayList<String> jsonContent;
@@ -234,13 +146,13 @@ public class KeepItemProxy implements IKeepItem {
         } catch (IOException ex) {
             Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+        */
         return null;
     }
 
     @Override
     public ArrayList<Item> searchItemByType(List<String> typeList, User user) throws PersistenceException {
-        
+    /*    
         PseudoPackage contentPackage;
         JsonReader reader;
         Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
@@ -270,13 +182,13 @@ public class KeepItemProxy implements IKeepItem {
             Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        
+        */
         return null;
     }
 
     @Override
     public ArrayList<Item> searchItemByTagAndType(List<Tag> tagList, List<String> typeList, User user) throws PersistenceException {
-        PseudoPackage contentPackage;
+     /*   PseudoPackage contentPackage;
         JsonReader reader;
         Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
         
@@ -305,8 +217,8 @@ public class KeepItemProxy implements IKeepItem {
         } catch (IOException ex) {
             Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+        */
         return null;
     }
-    */
+    
 }
