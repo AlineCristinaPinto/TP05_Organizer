@@ -118,106 +118,37 @@ public class KeepItemProxy implements IKeepItem {
     
     @Override
     public ArrayList<Item> searchItemByTag(List<Tag> tagList, User user) throws PersistenceException {
-    /*    PseudoPackage contentPackage;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
         
-        ArrayList<String> jsonContent;
-        JsonReader reader;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(tagList));
-        jsonContent.add(json.toJson(user));
-        
-        
-        RequestType requestType = RequestType.SEARCHITEMBYTAG;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-            
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                Type type = new TypeToken<ArrayList<Item>>() {}.getType();
-                return json.fromJson(reader, type);
-            }
-            
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            return keepItemRemote.searchItemByTag(tagList, user);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        */
+        
         return null;
     }
 
     @Override
     public ArrayList<Item> searchItemByType(List<String> typeList, User user) throws PersistenceException {
-    /*    
-        PseudoPackage contentPackage;
-        JsonReader reader;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
         
-        List<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(typeList));
-        jsonContent.add(json.toJson(user));
-        
-        
-        RequestType requestType = RequestType.SEARCHITEMBYTYPE;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-            
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                Type type = new TypeToken<ArrayList<Item>>() {}.getType();
-                return json.fromJson(reader, type);
-            }
-            
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            return keepItemRemote.searchItemByType(typeList, user);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        */
+    
         return null;
     }
 
     @Override
     public ArrayList<Item> searchItemByTagAndType(List<Tag> tagList, List<String> typeList, User user) throws PersistenceException {
-     /*   PseudoPackage contentPackage;
-        JsonReader reader;
-        Gson  json = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
         
-        ArrayList<String> jsonContent;
-        jsonContent = new ArrayList();
-        jsonContent.add(json.toJson(tagList));
-        jsonContent.add(json.toJson(typeList));
-        jsonContent.add(json.toJson(user));
-        
-        
-        RequestType requestType = RequestType.SEARCHITEMBYTAGANDTYPE;
-        contentPackage = new PseudoPackage(requestType, jsonContent);
         try {
-            PseudoPackage receivedPackage = client.request(contentPackage);
-            
-            reader = new JsonReader(new StringReader(receivedPackage.getContent().get(0)));
-            reader.setLenient(true);
-            
-            if(receivedPackage.getContent().get(0).equals("false")){
-                return null;
-            }else{
-                Type type = new TypeToken<ArrayList<Item>>() {}.getType();
-                return json.fromJson(reader, type);
-            }
-            
-        } catch (IOException ex) {
-            Logger.getLogger(KeepUserProxy.class.getName()).log(Level.SEVERE, null, ex);
+            return keepItemRemote.searchItemByTagAndType(tagList, typeList, user);
+        } catch (RemoteException ex) {
+            Logger.getLogger(KeepItemProxy.class.getName()).log(Level.SEVERE, null, ex);
         }
-        */
+    
         return null;
     }
     

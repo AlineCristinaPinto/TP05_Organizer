@@ -51,17 +51,17 @@ public class KeepItemAdapter implements IKeepItemRemote{
 
     @Override
     public ArrayList<Item> searchItemByTag(List<Tag> tagList, User user) throws PersistenceException, RemoteException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return keepItem.searchItemByTag(tagList, user);
     }
 
     @Override
     public ArrayList<Item> searchItemByType(List<String> typeList, User user) throws PersistenceException, RemoteException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return keepItem.searchItemByType(typeList, user);
     }
 
     @Override
     public ArrayList<Item> searchItemByTagAndType(List<Tag> tagList, List<String> typeList, User user) throws PersistenceException, RemoteException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return keepItem.searchItemByTagAndType(tagList, typeList, user);
     }
 
 }
