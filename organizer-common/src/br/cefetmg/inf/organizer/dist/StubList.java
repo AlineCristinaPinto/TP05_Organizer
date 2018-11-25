@@ -1,5 +1,5 @@
 package br.cefetmg.inf.organizer.dist;
 
 public enum StubList {
-    KeepUserAdapter
+    KeepUserAdapter,KeepItemAdapter,KeepItemTagAdapter,KeepTagAdapter
 }
