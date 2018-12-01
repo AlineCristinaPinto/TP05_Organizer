@@ -43,7 +43,7 @@ public class TagJPA implements Serializable {
     private String nomTag;
     @JoinColumn(name = "cod_email", referencedColumnName = "cod_email")
     @ManyToOne(optional = false)
-    private UserJPA codEmail;
+    private String codEmail;
 
     public TagJPA() {
     }
@@ -73,11 +73,11 @@ public class TagJPA implements Serializable {
         this.nomTag = nomTag;
     }
 
-    public UserJPA getCodEmail() {
+    public String getCodEmail() {
         return codEmail;
     }
 
-    public void setCodEmail(UserJPA codEmail) {
+    public void setCodEmail(String codEmail) {
         this.codEmail = codEmail;
     }
 
