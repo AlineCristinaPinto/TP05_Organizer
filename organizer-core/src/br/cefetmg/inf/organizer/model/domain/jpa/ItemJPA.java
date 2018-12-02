@@ -36,8 +36,17 @@ import org.hibernate.annotations.Type;
     , @NamedQuery(name = "ItemJPA.findByIdtItem", query = "SELECT i FROM ItemJPA i WHERE i.idtItem = :idtItem")
     , @NamedQuery(name = "ItemJPA.findByIdtEstado", query = "SELECT i FROM ItemJPA i WHERE i.idtEstado = :idtEstado")
     , @NamedQuery(name = "ItemJPA.findIfItemAlreadyExistsToCreate", query = "SELECT i FROM ItemJPA i WHERE i.nomItem = :nomItem and i.idtItem = :idtItem and i.codEmail = :codEmail")
-    , @NamedQuery(name = "ItemJPA.findIfItemAlreadyExistsToUpdate", query = "SELECT i FROM ItemJPA i WHERE i.nomItem = :nomItem and i.idtItem = :idtItem and i.codEmail = :codEmail and i.seqItem <> :seqItem")})
-
+    , @NamedQuery(name = "ItemJPA.findIfItemAlreadyExistsToUpdate", query = "SELECT i FROM ItemJPA i WHERE i.nomItem = :nomItem and i.idtItem = :idtItem and i.codEmail = :codEmail and i.seqItem <> :seqItem")
+    , @NamedQuery(name = "ItemJPA.searchItemByTag", query = "SELECT i FROM ItemJPA i WHERE i.seqItem IN (SELECT it.itemTagPK.seqItem "
+                                                            + "FROM ItemTagJPA it WHERE it.itemTagPK.seqTag IN :seqTagList "
+                                                            + "GROUP BY it.itemTagPK.seqItem HAVING COUNT(it.itemTagPK.seqItem) = :countTags) "
+                                                            + "AND i.codEmail = :codEmail")
+    , @NamedQuery(name = "ItemJPA.searchItemByType", query = "SELECT i FROM ItemJPA i WHERE i.idtItem IN :typeList "
+                                                            + "AND i.codEmail = :codEmail")
+    , @NamedQuery(name = "ItemJPA.searchItemByTagAndType", query = "SELECT i FROM ItemJPA i WHERE i.seqItem IN (SELECT it.itemTagPK.seqItem "
+                                                            + "FROM ItemTagJPA it WHERE it.itemTagPK.seqTag IN :seqTagList "
+                                                            + "GROUP BY it.itemTagPK.seqItem HAVING COUNT(it.itemTagPK.seqItem) = :countTags) "
+                                                            + "AND i.idtItem IN :typeList AND i.codEmail = :codEmail")})
 public class ItemJPA implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -61,7 +70,7 @@ public class ItemJPA implements Serializable {
     private Character idtEstado;
     @JoinColumn(name = "cod_email", referencedColumnName = "cod_email")
     @ManyToOne(optional = false)
-    private UserJPA codEmail;
+    private String codEmail;
 
     public ItemJPA() {
     }
@@ -124,11 +133,11 @@ public class ItemJPA implements Serializable {
         this.idtEstado = idtEstado;
     }
 
-    public UserJPA getCodEmail() {
+    public String getCodEmail() {
         return codEmail;
     }
 
-    public void setCodEmail(UserJPA codEmail) {
+    public void setCodEmail(String codEmail) {
         this.codEmail = codEmail;
     }
 

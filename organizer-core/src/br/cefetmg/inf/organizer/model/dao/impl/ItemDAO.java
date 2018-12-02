@@ -76,7 +76,7 @@ public class ItemDAO implements IItemDAO {
             UserJPA user = new UserJPA();            
             user.setCodEmail(item.getUser().getCodEmail());
             
-            itemJPA.setCodEmail(user);
+            itemJPA.setCodEmail(user.getCodEmail());
             itemJPA.setIdtItem(item.getIdentifierItem());
             itemJPA.setNomItem(item.getNameItem());
             itemJPA.setDesItem(item.getDescriptionItem());
@@ -142,7 +142,7 @@ public class ItemDAO implements IItemDAO {
             user.setCodEmail(item.getUser().getCodEmail());
             
             itemJPA.setSeqItem(item.getSeqItem().intValue());
-            itemJPA.setCodEmail(user);
+            itemJPA.setCodEmail(user.getCodEmail());
             itemJPA.setIdtItem(item.getIdentifierItem());
             itemJPA.setNomItem(item.getNameItem());
             itemJPA.setDesItem(item.getDescriptionItem());
@@ -337,44 +337,139 @@ public class ItemDAO implements IItemDAO {
 
     @Override
     public ArrayList<Item> searchItemByTag(List<Tag> tagList, User user) throws PersistenceException {
+        
+        if(!JPAUtil.usingJPA){
+            try {
+                //conditions of the sql's WHERE clause
+                String sqlConditions = "";
 
-        try {
-            //conditions of the sql's WHERE clause
-            String sqlConditions = "";
+                //number of sql's conditions (also number of tags in the ArrayList)
+                int countConditions = tagList.size();
 
-            //number of sql's conditions (also number of tags in the ArrayList)
-            int countConditions = tagList.size();
+                //user's email
+                String userEmail = user.getCodEmail();
 
-            //user's email
-            String userEmail = user.getCodEmail();
+                for (Tag tag : tagList) {
+                    //conditions in the format "seq_tag = ? OR seq_tag = ? OR ..."
+                    //*REMEMBER: change nom to seq after (or not)
+                    sqlConditions += "nom_tag = ? OR ";
+                }
 
-            for (Tag tag : tagList) {
-                //conditions in the format "seq_tag = ? OR seq_tag = ? OR ..."
-                //*REMEMBER: change nom to seq after (or not)
-                sqlConditions += "nom_tag = ? OR ";
+                //removing the last " OR " from the String
+                sqlConditions = sqlConditions.substring(0, sqlConditions.lastIndexOf(" OR "));
+
+                try (Connection connection = ConnectionManager.getInstance().getConnection()) {
+
+                    String sql = "SELECT A.* FROM item A JOIN item_tag B "
+                            + "ON (A.seq_item = B.seq_item) JOIN tag C "
+                            + "ON (B.seq_tag = C.seq_tag AND A.cod_email = C.cod_email) "
+                            + "WHERE (" + sqlConditions + " AND A.cod_email = ?) "
+                            + "GROUP BY 1 HAVING COUNT(*) = ? ORDER BY dat_item";
+
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                        int i;
+                        for (i = 1; i <= countConditions; i++) {
+                            //setting the first ?'s as tag names
+                            preparedStatement.setString(i, tagList.get(i - 1).getTagName());
+                        }
+                        preparedStatement.setString(i, userEmail);
+                        preparedStatement.setInt(i + 1, countConditions);
+
+                        try (ResultSet result = preparedStatement.executeQuery()) {
+                            ArrayList<Item> itemList = null;
+                            if (result.next()) {
+                                itemList = new ArrayList<>();
+                                do {
+                                    Item item = new Item();
+                                    item.setSeqItem(result.getLong("seq_item"));
+                                    item.setNameItem(result.getString("nom_item"));
+                                    item.setDescriptionItem(result.getString("des_item"));
+                                    item.setIdentifierItem(result.getString("idt_item"));
+                                    item.setDateItem(result.getDate("dat_item"));
+                                    item.setIdentifierStatus(result.getString("idt_estado"));
+
+                                    itemList.add(item);
+                                } while (result.next());
+                            }
+
+                            return itemList;
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                throw new PersistenceException(ex.getMessage());
+            }
+        }else{
+            
+            ArrayList<Integer> seqTagList = new ArrayList();
+            ArrayList<Item> itemList = null;
+            
+            for(Tag tag : tagList){
+                seqTagList.add(tag.getSeqTag().intValue());
+            }
+            
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("seqTagList", seqTagList);
+            namedParams.put("countTags", Integer.valueOf(seqTagList.size()).longValue());
+            namedParams.put("codEmail", user.getCodEmail());
+            ArrayList<ItemJPA> returnedObjects = genericDAO.findByNamedQuery("ItemJPA.searchItemByTag", namedParams);
+            
+            if(!returnedObjects.isEmpty()){
+                itemList = new ArrayList();
+            
+                for(ItemJPA itemJPA : returnedObjects){
+                    Item item = new Item();
+                    item.setSeqItem(itemJPA.getSeqItem().longValue());
+                    item.setNameItem(itemJPA.getNomItem());
+                    item.setDateItem(itemJPA.getDatItem());
+                    item.setDescriptionItem(itemJPA.getDesItem());
+                    item.setUser(user);
+                    item.setIdentifierStatus(String.valueOf(itemJPA.getIdtEstado()));
+                    item.setIdentifierItem(itemJPA.getIdtItem());
+
+                    itemList.add(item);
+                }
             }
 
-            //removing the last " OR " from the String
-            sqlConditions = sqlConditions.substring(0, sqlConditions.lastIndexOf(" OR "));
+            return itemList;
+        }
+    }
 
+    @Override
+    public ArrayList<Item> searchItemByType(List<String> typeList, User user) throws PersistenceException {
+        
+        if(!JPAUtil.usingJPA){
             try (Connection connection = ConnectionManager.getInstance().getConnection()) {
 
-                String sql = "SELECT A.* FROM item A JOIN item_tag B "
-                        + "ON (A.seq_item = B.seq_item) JOIN tag C "
-                        + "ON (B.seq_tag = C.seq_tag AND A.cod_email = C.cod_email) "
-                        + "WHERE (" + sqlConditions + " AND A.cod_email = ?) "
-                        + "GROUP BY 1 HAVING COUNT(*) = ? ORDER BY dat_item";
+                //conditions of the sql's WHERE clause
+                String sqlConditions = "";
+
+                //number of conditions (also number of types in the ArrayList)
+                int countConditions = typeList.size();
+
+                //user's email
+                String userEmail = user.getCodEmail();
+
+                for (String type : typeList) {
+                    //filling the sqlConditions with a String in the format
+                    //"idt_item = ? OR idt_item = ? OR ..."
+                    sqlConditions += "idt_item = ? OR ";
+                }
+                //removing the last " OR " from the string
+                sqlConditions = sqlConditions.substring(0, sqlConditions.lastIndexOf(" OR "));
+
+                String sql = "SELECT * FROM item WHERE " + sqlConditions
+                        + " AND cod_email = ? ORDER BY dat_item";
 
                 try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                     int i;
                     for (i = 1; i <= countConditions; i++) {
-                        //setting the first ?'s as tag names
-                        preparedStatement.setString(i, tagList.get(i - 1).getTagName());
+                        preparedStatement.setString(i, typeList.get(i - 1));
                     }
                     preparedStatement.setString(i, userEmail);
-                    preparedStatement.setInt(i + 1, countConditions);
 
                     try (ResultSet result = preparedStatement.executeQuery()) {
+
                         ArrayList<Item> itemList = null;
                         if (result.next()) {
                             itemList = new ArrayList<>();
@@ -394,143 +489,149 @@ public class ItemDAO implements IItemDAO {
                         return itemList;
                     }
                 }
+            } catch (Exception ex) {
+                throw new PersistenceException(ex.getMessage());
             }
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
-        }
-    }
+        } else {
+            
+            ArrayList<Item> itemList = null;
+            
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("typeList", typeList);
+            namedParams.put("codEmail", user.getCodEmail());
+            ArrayList<ItemJPA> returnedObjects = genericDAO.findByNamedQuery("ItemJPA.searchItemByType", namedParams);
+            
+            if(!returnedObjects.isEmpty()){
+                itemList = new ArrayList();
+            
+                for(ItemJPA itemJPA : returnedObjects){
+                    Item item = new Item();
+                    item.setSeqItem(itemJPA.getSeqItem().longValue());
+                    item.setNameItem(itemJPA.getNomItem());
+                    item.setDateItem(itemJPA.getDatItem());
+                    item.setDescriptionItem(itemJPA.getDesItem());
+                    item.setUser(user);
+                    item.setIdentifierStatus(String.valueOf(itemJPA.getIdtEstado()));
+                    item.setIdentifierItem(itemJPA.getIdtItem());
 
-    @Override
-    public ArrayList<Item> searchItemByType(List<String> typeList, User user) throws PersistenceException {
-        try (Connection connection = ConnectionManager.getInstance().getConnection()) {
-
-            //conditions of the sql's WHERE clause
-            String sqlConditions = "";
-
-            //number of conditions (also number of types in the ArrayList)
-            int countConditions = typeList.size();
-
-            //user's email
-            String userEmail = user.getCodEmail();
-
-            for (String type : typeList) {
-                //filling the sqlConditions with a String in the format
-                //"idt_item = ? OR idt_item = ? OR ..."
-                sqlConditions += "idt_item = ? OR ";
-            }
-            //removing the last " OR " from the string
-            sqlConditions = sqlConditions.substring(0, sqlConditions.lastIndexOf(" OR "));
-
-            String sql = "SELECT * FROM item WHERE " + sqlConditions
-                    + " AND cod_email = ? ORDER BY dat_item";
-
-            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                int i;
-                for (i = 1; i <= countConditions; i++) {
-                    preparedStatement.setString(i, typeList.get(i - 1));
-                }
-                preparedStatement.setString(i, userEmail);
-
-                try (ResultSet result = preparedStatement.executeQuery()) {
-
-                    ArrayList<Item> itemList = null;
-                    if (result.next()) {
-                        itemList = new ArrayList<>();
-                        do {
-                            Item item = new Item();
-                            item.setSeqItem(result.getLong("seq_item"));
-                            item.setNameItem(result.getString("nom_item"));
-                            item.setDescriptionItem(result.getString("des_item"));
-                            item.setIdentifierItem(result.getString("idt_item"));
-                            item.setDateItem(result.getDate("dat_item"));
-                            item.setIdentifierStatus(result.getString("idt_estado"));
-
-                            itemList.add(item);
-                        } while (result.next());
-                    }
-
-                    return itemList;
+                    itemList.add(item);
                 }
             }
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
+
+            return itemList;
         }
     }
 
     @Override
     public ArrayList<Item> searchItemByTagAndType(List<Tag> tagList, List<String> typeList, User user) throws PersistenceException {
 
-        try {
-            //conditions of the sql's WHERE clause
-            String sqlTagConditions = "";
-            String sqlTypeConditions = "";
+        if(!JPAUtil.usingJPA){
+            try {
+                //conditions of the sql's WHERE clause
+                String sqlTagConditions = "";
+                String sqlTypeConditions = "";
 
-            //number of tag and type sql's conditions
-            int countTagConditions = tagList.size();
-            int countTypeConditions = typeList.size();
+                //number of tag and type sql's conditions
+                int countTagConditions = tagList.size();
+                int countTypeConditions = typeList.size();
 
-            //user's email
-            String userEmail = user.getCodEmail();
+                //user's email
+                String userEmail = user.getCodEmail();
 
-            for (Tag tag : tagList) {
-                //conditions in the format "seq_tag = ? OR seq_tag = ? OR ..."
-                //*REMEMBER: change nom to seq after (or not)
-                sqlTagConditions += "nom_tag = ? OR ";
-            }
+                for (Tag tag : tagList) {
+                    //conditions in the format "seq_tag = ? OR seq_tag = ? OR ..."
+                    //*REMEMBER: change nom to seq after (or not)
+                    sqlTagConditions += "nom_tag = ? OR ";
+                }
 
-            for (String type : typeList) {
-                //conditions in the format "idt_item = ? OR idt_item = ? OR ..."
-                sqlTypeConditions += "idt_item = ? OR ";
-            }
+                for (String type : typeList) {
+                    //conditions in the format "idt_item = ? OR idt_item = ? OR ..."
+                    sqlTypeConditions += "idt_item = ? OR ";
+                }
 
-            //removing the last " OR " from the Strings
-            sqlTagConditions = sqlTagConditions.substring(0, sqlTagConditions.lastIndexOf(" OR "));
-            sqlTypeConditions = sqlTypeConditions.substring(0, sqlTypeConditions.lastIndexOf(" OR "));
+                //removing the last " OR " from the Strings
+                sqlTagConditions = sqlTagConditions.substring(0, sqlTagConditions.lastIndexOf(" OR "));
+                sqlTypeConditions = sqlTypeConditions.substring(0, sqlTypeConditions.lastIndexOf(" OR "));
 
-            try (Connection connection = ConnectionManager.getInstance().getConnection()) {
+                try (Connection connection = ConnectionManager.getInstance().getConnection()) {
 
-                String sql = "SELECT A.* FROM item A JOIN item_tag B "
-                        + "ON (A.seq_item = B.seq_item) JOIN tag C "
-                        + "ON (B.seq_tag = C.seq_tag AND A.cod_email = C.cod_email) "
-                        + "WHERE (" + sqlTagConditions + " AND (" + sqlTypeConditions
-                        + ") AND A.cod_email = ?) GROUP BY 1 HAVING COUNT(*) = ? "
-                        + "ORDER BY dat_item";
+                    String sql = "SELECT A.* FROM item A JOIN item_tag B "
+                            + "ON (A.seq_item = B.seq_item) JOIN tag C "
+                            + "ON (B.seq_tag = C.seq_tag AND A.cod_email = C.cod_email) "
+                            + "WHERE (" + sqlTagConditions + " AND (" + sqlTypeConditions
+                            + ") AND A.cod_email = ?) GROUP BY 1 HAVING COUNT(*) = ? "
+                            + "ORDER BY dat_item";
 
-                try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                    int i;
-                    for (i = 1; i <= countTagConditions + countTypeConditions; i++) {
-                        if (i <= countTagConditions) {
-                            preparedStatement.setString(i, tagList.get(i - 1).getTagName());
-                        } else {
-                            preparedStatement.setString(i, typeList.get(i - countTagConditions - 1));
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                        int i;
+                        for (i = 1; i <= countTagConditions + countTypeConditions; i++) {
+                            if (i <= countTagConditions) {
+                                preparedStatement.setString(i, tagList.get(i - 1).getTagName());
+                            } else {
+                                preparedStatement.setString(i, typeList.get(i - countTagConditions - 1));
+                            }
                         }
-                    }
-                    preparedStatement.setString(i, userEmail);
-                    preparedStatement.setInt(i + 1, countTagConditions);
+                        preparedStatement.setString(i, userEmail);
+                        preparedStatement.setInt(i + 1, countTagConditions);
 
-                    try (ResultSet result = preparedStatement.executeQuery()) {
-                        ArrayList<Item> itemList = null;
-                        if (result.next()) {
-                            itemList = new ArrayList<>();
-                            do {
-                                Item item = new Item();
-                                item.setSeqItem(result.getLong("seq_item"));
-                                item.setNameItem(result.getString("nom_item"));
-                                item.setDescriptionItem(result.getString("des_item"));
-                                item.setIdentifierItem(result.getString("idt_item"));
-                                item.setDateItem(result.getDate("dat_item"));
-                                item.setIdentifierStatus(result.getString("idt_estado"));
+                        try (ResultSet result = preparedStatement.executeQuery()) {
+                            ArrayList<Item> itemList = null;
+                            if (result.next()) {
+                                itemList = new ArrayList<>();
+                                do {
+                                    Item item = new Item();
+                                    item.setSeqItem(result.getLong("seq_item"));
+                                    item.setNameItem(result.getString("nom_item"));
+                                    item.setDescriptionItem(result.getString("des_item"));
+                                    item.setIdentifierItem(result.getString("idt_item"));
+                                    item.setDateItem(result.getDate("dat_item"));
+                                    item.setIdentifierStatus(result.getString("idt_estado"));
 
-                                itemList.add(item);
-                            } while (result.next());
+                                    itemList.add(item);
+                                } while (result.next());
+                            }
+
+                            return itemList;
                         }
-
-                        return itemList;
                     }
                 }
+            } catch (Exception ex) {
+                throw new PersistenceException(ex.getMessage());
             }
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
+        } else {
+            
+            ArrayList<Integer> seqTagList = new ArrayList();
+            ArrayList<Item> itemList = null;
+            
+            for(Tag tag : tagList){
+                seqTagList.add(tag.getSeqTag().intValue());
+            }
+            
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("seqTagList", seqTagList);
+            namedParams.put("countTags", Integer.valueOf(seqTagList.size()).longValue());
+            namedParams.put("typeList", typeList);
+            namedParams.put("codEmail", user.getCodEmail());
+            ArrayList<ItemJPA> returnedObjects = genericDAO.findByNamedQuery("ItemJPA.searchItemByTagAndType", namedParams);
+            
+            if(!returnedObjects.isEmpty()){
+                itemList = new ArrayList();
+            
+                for(ItemJPA itemJPA : returnedObjects){
+                    Item item = new Item();
+                    item.setSeqItem(itemJPA.getSeqItem().longValue());
+                    item.setNameItem(itemJPA.getNomItem());
+                    item.setDateItem(itemJPA.getDatItem());
+                    item.setDescriptionItem(itemJPA.getDesItem());
+                    item.setUser(user);
+                    item.setIdentifierStatus(String.valueOf(itemJPA.getIdtEstado()));
+                    item.setIdentifierItem(itemJPA.getIdtItem());
+
+                    itemList.add(item);
+                }
+            }
+
+            return itemList;
         }
     }
 
@@ -569,7 +670,7 @@ public class ItemDAO implements IItemDAO {
             UserJPA user = new UserJPA();            
             user.setCodEmail(item.getUser().getCodEmail());
             
-            itemJPA.setCodEmail(user);
+            itemJPA.setCodEmail(user.getCodEmail());
             itemJPA.setIdtItem(item.getIdentifierItem());
             itemJPA.setNomItem(item.getNameItem());
         
@@ -624,7 +725,7 @@ public class ItemDAO implements IItemDAO {
             UserJPA user = new UserJPA();            
             user.setCodEmail(item.getUser().getCodEmail());
             
-            itemJPA.setCodEmail(user);
+            itemJPA.setCodEmail(user.getCodEmail());
             itemJPA.setIdtItem(item.getIdentifierItem());
             itemJPA.setNomItem(item.getNameItem());
         

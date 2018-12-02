@@ -17,10 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-/**
- *
- * @author aline
- */
+
 public class ItemDAOTest {
     
     public ItemDAOTest() {
@@ -103,15 +100,19 @@ public class ItemDAOTest {
      * Test of listAllItem method, of class ItemDAO.
      */
     @Test
-    public void testListAllItem() throws Exception {
-      /*  System.out.println("listAllItem");
-        User user = null;
+    public void testListAllItem() throws Exception {/*
+        System.out.println("listAllItem");
+        User user = new User();
+        user.setCodEmail("1");
+        user.setUserName("1");
+        user.setUserPassword("1");
+        user.setUserPhoto(null);
+        user.setCurrentTheme(1);
+        
         ItemDAO instance = new ItemDAO();
         ArrayList<Item> expResult = null;
         ArrayList<Item> result = instance.listAllItem(user);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");*/
+        assertEquals(false, result.isEmpty());*/
     }
 
     /**
@@ -120,6 +121,7 @@ public class ItemDAOTest {
     @Test
     public void testSearchItemByName() throws Exception {
        /* System.out.println("searchItemByName");
+        System.out.println("searchItemByName");
         String nomeItem = "";
         ItemDAO instance = new ItemDAO();
         Item expResult = null;
@@ -133,31 +135,45 @@ public class ItemDAOTest {
      * Test of searchItemById method, of class ItemDAO.
      */
     @Test
-    public void testSearchItemById() throws Exception {
-       /* System.out.println("searchItemById");
-        Long idItem = null;
+    public void testSearchItemById() throws Exception {/*
+        System.out.println("searchItemById");
+        Long idItem = Long.parseLong("2");
         ItemDAO instance = new ItemDAO();
-        Item expResult = null;
+        Item expResult = new Item();
         Item result = instance.searchItemById(idItem);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");*/
+        assertEquals("tarefafa", result.getNameItem());*/
     }
 
     /**
      * Test of searchItemByTag method, of class ItemDAO.
      */
     @Test
-    public void testSearchItemByTag() throws Exception {
-       /* System.out.println("searchItemByTag");
-        List<Tag> tagList = null;
-        User user = null;
+    public void testSearchItemByTag() throws Exception {/*
+        System.out.println("searchItemByTag");
+        List<Tag> tagList = new ArrayList();
+        Tag tag = new Tag();
+        Tag tag2 = new Tag();
+        Tag tag3 = new Tag();
+        
+        tag.setSeqTag(Long.parseLong("1"));
+        tagList.add(tag);
+        tag2.setSeqTag(Long.parseLong("2"));
+        tagList.add(tag2);
+        tag3.setSeqTag(Long.parseLong("3"));
+        tagList.add(tag3);
+        
+        User user = new User();
+        user.setCodEmail("1");
+        
         ItemDAO instance = new ItemDAO();
         ArrayList<Item> expResult = null;
         ArrayList<Item> result = instance.searchItemByTag(tagList, user);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");*/
+        
+        result.forEach((item) -> {
+            System.out.println("Seq: " +item.getSeqItem() +" Name: " +item.getNameItem());
+        });
+        
+        assertEquals(false, result.isEmpty());*/
     }
 
     /**
@@ -165,15 +181,24 @@ public class ItemDAOTest {
      */
     @Test
     public void testSearchItemByType() throws Exception {
-      /*  System.out.println("searchItemByType");
-        List<String> typeList = null;
-        User user = null;
+       /* System.out.println("searchItemByType");
+        List<String> typeList = new ArrayList();
+        typeList.add("SIM");
+        typeList.add("TAR");
+        typeList.add("LEM");
+        
+        User user = new User();
+        user.setCodEmail("1");
+        
         ItemDAO instance = new ItemDAO();
-        ArrayList<Item> expResult = null;
+        
         ArrayList<Item> result = instance.searchItemByType(typeList, user);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");*/
+        
+        result.forEach((item) -> {
+            System.out.println("Seq: " +item.getSeqItem() +" Name: " +item.getNameItem());
+        });
+        
+        assertEquals(false, result.isEmpty());*/
     }
 
     /**
@@ -181,16 +206,37 @@ public class ItemDAOTest {
      */
     @Test
     public void testSearchItemByTagAndType() throws Exception {
-       /* System.out.println("searchItemByTagAndType");
-        List<Tag> tagList = null;
-        List<String> typeList = null;
-        User user = null;
+       /*
+        System.out.println("searchItemByTagAndType");
+        List<Tag> tagList = new ArrayList();
+        Tag tag = new Tag();
+        Tag tag2 = new Tag();
+        Tag tag3 = new Tag();
+        
+        tag.setSeqTag(Long.parseLong("1"));
+        //tagList.add(tag);
+        tag2.setSeqTag(Long.parseLong("2"));
+        tagList.add(tag2);
+        tag3.setSeqTag(Long.parseLong("3"));
+        //tagList.add(tag3);
+        
+        List<String> typeList = new ArrayList();
+        typeList.add("SIM");
+        typeList.add("TAR");
+        typeList.add("LEM");
+        
+        User user = new User();
+        user.setCodEmail("1");
+        
         ItemDAO instance = new ItemDAO();
         ArrayList<Item> expResult = null;
         ArrayList<Item> result = instance.searchItemByTagAndType(tagList, typeList, user);
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");*/
+        
+        result.forEach((item) -> {
+            System.out.println("Seq: " +item.getSeqItem() +" Name: " +item.getNameItem());
+        });
+        
+        assertEquals(false, result.isEmpty());*/
     }
 
     /**
