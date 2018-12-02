@@ -31,7 +31,17 @@ import javax.xml.bind.annotation.XmlRootElement;
     , @NamedQuery(name = "ItemJPA.findByDesItem", query = "SELECT i FROM ItemJPA i WHERE i.desItem = :desItem")
     , @NamedQuery(name = "ItemJPA.findByDatItem", query = "SELECT i FROM ItemJPA i WHERE i.datItem = :datItem")
     , @NamedQuery(name = "ItemJPA.findByIdtItem", query = "SELECT i FROM ItemJPA i WHERE i.idtItem = :idtItem")
-    , @NamedQuery(name = "ItemJPA.findByIdtEstado", query = "SELECT i FROM ItemJPA i WHERE i.idtEstado = :idtEstado")})
+    , @NamedQuery(name = "ItemJPA.findByIdtEstado", query = "SELECT i FROM ItemJPA i WHERE i.idtEstado = :idtEstado")
+    , @NamedQuery(name = "ItemJPA.searchItemByTag", query = "SELECT i FROM ItemJPA i WHERE i.seqItem IN (SELECT it.itemTagPK.seqItem "
+                                                            + "FROM ItemTagJPA it WHERE it.itemTagPK.seqTag IN :seqTagList "
+                                                            + "GROUP BY it.itemTagPK.seqItem HAVING COUNT(it.itemTagPK.seqItem) = :countTags) "
+                                                            + "AND i.codEmail = :codEmail")
+    , @NamedQuery(name = "ItemJPA.searchItemByType", query = "SELECT i FROM ItemJPA i WHERE i.idtItem IN :typeList "
+                                                            + "AND i.codEmail = :codEmail")
+    , @NamedQuery(name = "ItemJPA.searchItemByTagAndType", query = "SELECT i FROM ItemJPA i WHERE i.seqItem IN (SELECT it.itemTagPK.seqItem "
+                                                            + "FROM ItemTagJPA it WHERE it.itemTagPK.seqTag IN :seqTagList "
+                                                            + "GROUP BY it.itemTagPK.seqItem HAVING COUNT(it.itemTagPK.seqItem) = :countTags) "
+                                                            + "AND i.idtItem IN :typeList AND i.codEmail = :codEmail")})
 public class ItemJPA implements Serializable {
 
     private static final long serialVersionUID = 1L;
