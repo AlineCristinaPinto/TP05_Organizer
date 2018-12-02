@@ -5,135 +5,267 @@
  */
 package br.cefetmg.inf.organizer.model.dao.impl;
 
+import br.cefetmg.inf.organizer.model.dao.GenericDAO;
 import br.cefetmg.inf.organizer.model.dao.IItemDAO;
+import br.cefetmg.inf.organizer.model.dao.impl.jpa.GenericDAOImpl;
 import br.cefetmg.inf.organizer.model.domain.Item;
 import br.cefetmg.inf.organizer.model.domain.Tag;
 import br.cefetmg.inf.organizer.model.domain.User;
+import br.cefetmg.inf.organizer.model.domain.jpa.ItemJPA;
+import br.cefetmg.inf.organizer.model.domain.jpa.UserJPA;
 import br.cefetmg.inf.util.db.ConnectionManager;
+import br.cefetmg.inf.util.db.JPAUtil;
 import br.cefetmg.inf.util.exception.PersistenceException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
  * @author aline
  */
 public class ItemDAO implements IItemDAO {
+    
+    private GenericDAO genericDAO;
 
-    @Override
-    public boolean createItem(Item item) throws PersistenceException {
-
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "INSERT INTO item (nom_item, des_item, dat_item, idt_item, idt_estado, cod_email)"
-                    + "VALUES(?, ?, ?, ?, ?, ?)";
-
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-
-            preparedStatement.setString(1, item.getNameItem());
-            preparedStatement.setString(2, item.getDescriptionItem());
-            if (item.getDateItem() == null) {
-                preparedStatement.setDate(3, null);
-            } else {
-                preparedStatement.setDate(3, new java.sql.Date(item.getDateItem().getTime()));
-            }
-            preparedStatement.setString(4, item.getIdentifierItem());
-            preparedStatement.setString(5, item.getIdentifierStatus());
-            preparedStatement.setString(6, item.getUser().getCodEmail());
-
-            preparedStatement.execute();
-            preparedStatement.close();
-            connection.close();
-
-            return true;
-
-        } catch (Exception e) {
-            throw new PersistenceException(e.getMessage());
+    public ItemDAO() {
+        if (JPAUtil.usingJPA) {
+            genericDAO = new GenericDAOImpl();
         }
     }
 
     @Override
-    public boolean updateItem(Item item) throws PersistenceException {
+    public boolean createItem(Item item) throws PersistenceException {
 
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "UPDATE item SET nom_item=?, des_item=?, dat_item=?, idt_estado=?"
+        if (!JPAUtil.usingJPA) {
+            try {
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "INSERT INTO item (nom_item, des_item, dat_item, idt_item, idt_estado, cod_email)"
+                    + "VALUES(?, ?, ?, ?, ?, ?)";
+
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+              
+                preparedStatement.setString(1, item.getNameItem());
+                preparedStatement.setString(2, item.getDescriptionItem());
+                if (item.getDateItem() == null) {
+                    preparedStatement.setDate(3, null);
+                } else {
+                    preparedStatement.setDate(3, new java.sql.Date(item.getDateItem().getTime()));
+                }
+                preparedStatement.setString(4, item.getIdentifierItem());
+                preparedStatement.setString(5, item.getIdentifierStatus());
+                preparedStatement.setString(6, item.getUser().getCodEmail());
+
+                preparedStatement.execute();
+                preparedStatement.close();
+                connection.close();
+
+                return true;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw new PersistenceException(ex.getMessage(), ex);
+            }
+        } else {
+            System.out.println("Using JPA");
+            ItemJPA itemJPA = new ItemJPA();
+            
+            UserJPA user = new UserJPA();            
+            user.setCodEmail(item.getUser().getCodEmail());
+            
+            itemJPA.setCodEmail(user);
+            itemJPA.setIdtItem(item.getIdentifierItem());
+            itemJPA.setNomItem(item.getNameItem());
+            itemJPA.setDesItem(item.getDescriptionItem());
+            if(item.getDateItem() == null) {
+                itemJPA.setDatItem(null);
+            } else {
+                itemJPA.setDatItem(new java.sql.Date(item.getDateItem().getTime()));
+            }
+            
+            if(item.getIdentifierStatus() == null){
+               itemJPA.setIdtEstado('n');
+
+            } else {
+               itemJPA.setIdtEstado(item.getIdentifierStatus().charAt(0));
+            }
+            
+            return genericDAO.save(itemJPA);
+        }
+
+    }
+
+    @Override
+    public boolean updateItem(Item item) throws PersistenceException {
+        
+        if (!JPAUtil.usingJPA) {
+            try {
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "UPDATE item SET nom_item=?, des_item=?, dat_item=?, idt_estado=?"
                     + " WHERE cod_email=? and seq_item=?";
 
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
-            preparedStatement.setString(1, item.getNameItem());
-            preparedStatement.setString(2, item.getDescriptionItem());
-            if (item.getDateItem() == null) {
-                preparedStatement.setDate(3, null);
-            } else {
-                preparedStatement.setDate(3, new java.sql.Date(item.getDateItem().getTime()));
+                preparedStatement.setString(1, item.getNameItem());
+                preparedStatement.setString(2, item.getDescriptionItem());
+                if (item.getDateItem() == null) {
+                    preparedStatement.setDate(3, null);
+                } else {
+                    preparedStatement.setDate(3, new java.sql.Date(item.getDateItem().getTime()));
+                }
+                if (item.getIdentifierStatus() == null) {
+                    preparedStatement.setString(4, null);
+                } else {
+                    preparedStatement.setString(4, item.getIdentifierStatus());
+                }
+
+                preparedStatement.setString(5, item.getUser().getCodEmail());
+                preparedStatement.setLong(6, item.getSeqItem());
+
+                preparedStatement.executeUpdate();
+                preparedStatement.close();
+                connection.close();
+
+                return true;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw new PersistenceException(ex.getMessage(), ex);
             }
-            if (item.getIdentifierStatus() == null) {
-                preparedStatement.setString(4, null);
+        } else {
+            System.out.println("Using JPA");
+            ItemJPA itemJPA = new ItemJPA();
+            
+            UserJPA user = new UserJPA();            
+            user.setCodEmail(item.getUser().getCodEmail());
+            
+            itemJPA.setSeqItem(item.getSeqItem().intValue());
+            itemJPA.setCodEmail(user);
+            itemJPA.setIdtItem(item.getIdentifierItem());
+            itemJPA.setNomItem(item.getNameItem());
+            itemJPA.setDesItem(item.getDescriptionItem());
+            if(item.getDateItem() == null) {
+                itemJPA.setDatItem(null);
             } else {
-                preparedStatement.setString(4, item.getIdentifierStatus());
+                itemJPA.setDatItem(new java.sql.Date(item.getDateItem().getTime()));
+            }
+            
+            if(item.getIdentifierStatus() == null){
+               itemJPA.setIdtEstado('n');
+
+            } else {
+               itemJPA.setIdtEstado(item.getIdentifierStatus().charAt(0));
             }
 
-            preparedStatement.setString(5, item.getUser().getCodEmail());
-            preparedStatement.setLong(6, item.getSeqItem());
-
-            preparedStatement.executeUpdate();
-            preparedStatement.close();
-            connection.close();
-
-            return true;
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
+            return genericDAO.update(itemJPA);
         }
     }
 
     @Override
     public boolean deleteItem(Long idItem, User user) throws PersistenceException {
 
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "DELETE FROM item WHERE cod_email=? and seq_item=?";
+        if (!JPAUtil.usingJPA) {
+            try {
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "DELETE FROM item WHERE cod_email=? and seq_item=?";
 
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
-            preparedStatement.setString(1, user.getCodEmail());
-            preparedStatement.setLong(2, idItem);
+                preparedStatement.setString(1, user.getCodEmail());
+                preparedStatement.setLong(2, idItem);
 
-            preparedStatement.execute();
-            preparedStatement.close();
-            connection.close();
+                preparedStatement.execute();
+                preparedStatement.close();
+                connection.close();
 
+                return true;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw new PersistenceException(ex.getMessage(), ex);
+            }
+        } else {
+            System.out.println("Using JPA");
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("seqItem", idItem);
+            namedParams.put("codEmail", user.getCodEmail());
+            
+            genericDAO.findByNamedQuery("ItemJPA.deleteItem", namedParams);
+            
             return true;
-
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
         }
     }
 
     @Override
     public ArrayList<Item> listAllItem(User user) throws PersistenceException {
 
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
- 
-            String sql = "SELECT * FROM item WHERE cod_email=? AND (idt_estado <> 'C' OR idt_estado IS NULL) ORDER BY dat_item";
+        if(!JPAUtil.usingJPA){
+            try {
+                Connection connection = ConnectionManager.getInstance().getConnection();
 
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                String sql = "SELECT * FROM item WHERE cod_email=? AND (idt_estado <> 'C' OR idt_estado IS NULL) ORDER BY dat_item";
 
-            preparedStatement.setString(1, user.getCodEmail());
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
-            ResultSet result = preparedStatement.executeQuery();
+                preparedStatement.setString(1, user.getCodEmail());
 
-            ArrayList<Item> listAllItem = null;
+                ResultSet result = preparedStatement.executeQuery();
 
-            if (result.next()) {
-                listAllItem = new ArrayList<>();
-                do {
-                    Item item = new Item();
+                ArrayList<Item> listAllItem = null;
+
+                if (result.next()) {
+                    listAllItem = new ArrayList<>();
+                    do {
+                        Item item = new Item();
+                        item.setSeqItem(result.getLong("seq_item"));
+                        item.setNameItem(result.getString("nom_item"));
+                        item.setDescriptionItem(result.getString("des_item"));
+                        item.setIdentifierItem(result.getString("idt_item"));
+                        item.setDateItem(result.getDate("dat_item"));
+                        item.setIdentifierStatus(result.getString("idt_estado"));
+
+                        listAllItem.add(item);
+                    } while (result.next());
+                }
+
+                result.close();
+                preparedStatement.close();
+                connection.close();
+
+                return listAllItem;
+            } catch (Exception ex) {
+                throw new PersistenceException(ex.getMessage());
+            }
+        } else {
+            
+            Map<String, Object> namedParams = new HashMap<>();
+            //namedParams.put("seqTag", tagList.get(0).getSeqTag());
+            namedParams.put("codEmail", user.getCodEmail());
+            ArrayList returnedObjects = genericDAO.findByNamedQuery("ItemJPA.findAll", namedParams);
+
+            return returnedObjects;
+        }
+        
+    }
+
+    @Override
+    public Item searchItemByName(String nomeItem) throws PersistenceException {
+      
+        if (!JPAUtil.usingJPA) {
+            try{
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "SELECT * FROM item WHERE nom_item=?";
+
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setString(1, nomeItem);
+
+                ResultSet result = preparedStatement.executeQuery();
+
+                Item item = new Item();
+
+                if (result.next()) {
+
                     item.setSeqItem(result.getLong("seq_item"));
                     item.setNameItem(result.getString("nom_item"));
                     item.setDescriptionItem(result.getString("des_item"));
@@ -141,90 +273,65 @@ public class ItemDAO implements IItemDAO {
                     item.setDateItem(result.getDate("dat_item"));
                     item.setIdentifierStatus(result.getString("idt_estado"));
 
-                    listAllItem.add(item);
-                } while (result.next());
+                }
+
+                result.close();
+                preparedStatement.close();
+                connection.close();
+
+                return item;
+            } catch (Exception ex) {
+                throw new PersistenceException(ex.getMessage());
             }
-
-            result.close();
-            preparedStatement.close();
-            connection.close();
-
-            return listAllItem;
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
-        }
-
-    }
-
-    @Override
-    public Item searchItemByName(String nomeItem) throws PersistenceException {
-
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "SELECT * FROM item WHERE nom_item=?";
-
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, nomeItem);
-
-            ResultSet result = preparedStatement.executeQuery();
-
-            Item item = new Item();
-
-            if (result.next()) {
-
-                item.setSeqItem(result.getLong("seq_item"));
-                item.setNameItem(result.getString("nom_item"));
-                item.setDescriptionItem(result.getString("des_item"));
-                item.setIdentifierItem(result.getString("idt_item"));
-                item.setDateItem(result.getDate("dat_item"));
-                item.setIdentifierStatus(result.getString("idt_estado"));
-
-            }
-
-            result.close();
-            preparedStatement.close();
-            connection.close();
-
-            return item;
-
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
+        } else {
+            System.out.println("Using JPA");
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("nomItem", nomeItem);
+            
+            return (Item) genericDAO.findByNamedQuery("ItemJPA.findByNomItem", namedParams).get(0);            
         }
     }
 
     @Override
     public Item searchItemById(Long idItem) throws PersistenceException {
 
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "SELECT * FROM item WHERE seq_item=?";
+        if (!JPAUtil.usingJPA) {
+            try{
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "SELECT * FROM item WHERE seq_item=?";
 
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setLong(1, idItem);
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setLong(1, idItem);
 
-            ResultSet result = preparedStatement.executeQuery();
+                ResultSet result = preparedStatement.executeQuery();
 
-            Item item = new Item();
+                Item item = new Item();
 
-            if (result.next()) {
+                if (result.next()) {
 
-                item.setSeqItem(result.getLong("seq_item"));
-                item.setNameItem(result.getString("nom_item"));
-                item.setDescriptionItem(result.getString("des_item"));
-                item.setIdentifierItem(result.getString("idt_item"));
-                item.setDateItem(result.getDate("dat_item"));
-                item.setIdentifierStatus(result.getString("idt_estado"));
+                    item.setSeqItem(result.getLong("seq_item"));
+                    item.setNameItem(result.getString("nom_item"));
+                    item.setDescriptionItem(result.getString("des_item"));
+                    item.setIdentifierItem(result.getString("idt_item"));
+                    item.setDateItem(result.getDate("dat_item"));
+                    item.setIdentifierStatus(result.getString("idt_estado"));
 
+                }
+
+                result.close();
+                preparedStatement.close();
+                connection.close();
+
+                return item;
+            } catch (Exception ex) {
+                throw new PersistenceException(ex.getMessage());
             }
-
-            result.close();
-            preparedStatement.close();
-            connection.close();
-
-            return item;
-
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
+        } else {
+            System.out.println("Using JPA");
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("seqItem", idItem);
+            
+            return (Item) genericDAO.findByNamedQuery("ItemJPA.findByNomItem", namedParams).get(0);            
         }
     }
 
@@ -429,56 +536,111 @@ public class ItemDAO implements IItemDAO {
 
     @Override
     public boolean checkIfItemAlreadyExistsToCreate(Item item) throws PersistenceException {
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "SELECT nom_item FROM item WHERE nom_item=? and idt_item=? and cod_email=?";
+                
+        if (!JPAUtil.usingJPA) {
+            try {
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "SELECT nom_item FROM item WHERE nom_item=? and idt_item=? and cod_email=?";
 
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, item.getNameItem());
-            preparedStatement.setString(2, item.getIdentifierItem());
-            preparedStatement.setString(3, item.getUser().getCodEmail());
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setString(1, item.getNameItem());
+                preparedStatement.setString(2, item.getIdentifierItem());
+                preparedStatement.setString(3, item.getUser().getCodEmail());
+
+                ResultSet result = preparedStatement.executeQuery();
+
+                if (result.next()) {
+                    return true;
+                }
+
+                result.close();
+                preparedStatement.close();
+                connection.close();
+
+                return false;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw new PersistenceException(ex.getMessage(), ex);
+            }
+        } else {
+            System.out.println("Using JPA");
+            ItemJPA itemJPA = new ItemJPA();
             
-            ResultSet result = preparedStatement.executeQuery();
-
-            if (result.next()) {
+            UserJPA user = new UserJPA();            
+            user.setCodEmail(item.getUser().getCodEmail());
+            
+            itemJPA.setCodEmail(user);
+            itemJPA.setIdtItem(item.getIdentifierItem());
+            itemJPA.setNomItem(item.getNameItem());
+        
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("nomItem", item.getNameItem());
+            namedParams.put("codEmail", item.getUser().getCodEmail());
+            namedParams.put("idtItem", item.getIdentifierItem());
+            
+            Item i = (Item) genericDAO.findByNamedQuery("ItemJPA.findIfItemAlreadyExistsToCreate", namedParams).get(0);    
+            
+            if(i == null){
                 return true;
             }
-
-            result.close();
-            preparedStatement.close();
-            connection.close();
-
+        
             return false;
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
         }
     }
     
     @Override
     public boolean checkIfItemAlreadyExistsToUpdate(Item item) throws PersistenceException {
-        try {
-            Connection connection = ConnectionManager.getInstance().getConnection();
-            String sql = "SELECT nom_item FROM item WHERE nom_item=? and idt_item=? and cod_email=? and seq_item <> ?";
+        
+        if (!JPAUtil.usingJPA) {
+            try {
+                Connection connection = ConnectionManager.getInstance().getConnection();
+                String sql = "SELECT nom_item FROM item WHERE nom_item=? and idt_item=? and cod_email=? and seq_item <> ?";
 
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, item.getNameItem());
-            preparedStatement.setString(2, item.getIdentifierItem());
-            preparedStatement.setString(3, item.getUser().getCodEmail());
-            preparedStatement.setLong(4, item.getSeqItem());
+                PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                preparedStatement.setString(1, item.getNameItem());
+                preparedStatement.setString(2, item.getIdentifierItem());
+                preparedStatement.setString(3, item.getUser().getCodEmail());
+                preparedStatement.setLong(4, item.getSeqItem());
+
+                ResultSet result = preparedStatement.executeQuery();
+
+                if (result.next()) {
+                    return true;
+                }
+
+                result.close();
+                preparedStatement.close();
+                connection.close();
+
+                return false;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw new PersistenceException(ex.getMessage(), ex);
+            }
+        } else {
+            System.out.println("Using JPA");
+            ItemJPA itemJPA = new ItemJPA();
             
-            ResultSet result = preparedStatement.executeQuery();
-
-            if (result.next()) {
+            UserJPA user = new UserJPA();            
+            user.setCodEmail(item.getUser().getCodEmail());
+            
+            itemJPA.setCodEmail(user);
+            itemJPA.setIdtItem(item.getIdentifierItem());
+            itemJPA.setNomItem(item.getNameItem());
+        
+            Map<String, Object> namedParams = new HashMap<>();
+            namedParams.put("nomItem", item.getNameItem());
+            namedParams.put("codEmail", item.getUser().getCodEmail());
+            namedParams.put("idtItem", item.getIdentifierItem());
+            namedParams.put("seqItem", item.getSeqItem());
+            
+            Item i = (Item) genericDAO.findByNamedQuery("ItemJPA.findIfItemAlreadyExistsToUpdate", namedParams).get(0);    
+            
+            if(i == null){
                 return true;
             }
-
-            result.close();
-            preparedStatement.close();
-            connection.close();
-
+        
             return false;
-        } catch (Exception ex) {
-            throw new PersistenceException(ex.getMessage());
         }
     }
 }

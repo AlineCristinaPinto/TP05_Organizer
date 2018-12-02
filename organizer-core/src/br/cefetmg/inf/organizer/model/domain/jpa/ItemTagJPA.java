@@ -23,7 +23,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ItemTagJPA.getAll", query = "SELECT i FROM ItemTagJPA i")
     , @NamedQuery(name = "ItemTagJPA.getBySeqItem", query = "SELECT i FROM ItemTagJPA i WHERE i.itemTagPK.seqItem = :seqItem")
-    , @NamedQuery(name = "ItemTagJPA.getBySeqTag", query = "SELECT i FROM ItemTagJPA i WHERE i.itemTagPK.seqTag = :seqTag")})
+    , @NamedQuery(name = "ItemTagJPA.getBySeqTag", query = "SELECT i FROM ItemTagJPA i WHERE i.itemTagPK.seqTag = :seqTag")
+    , @NamedQuery(name = "ItemTagJPA.deleteTagByItemId", query = "DELETE FROM ItemTagJPA i WHERE WHERE i.itemTagPK.seqItem = :seqItem")
+    , @NamedQuery(name = "ItemTagJPA.deleteTagInItem", query = "DELETE FROM ItemTagJPA i WHERE WHERE i.itemTagPK.seqItem = :seqItem and i.itemTagPK.seqTag = :seqTag ")})
 public class ItemTagJPA implements Serializable {
 
     private static final long serialVersionUID = 1L;

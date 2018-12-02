@@ -9,6 +9,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -16,6 +17,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
+import org.hibernate.annotations.Type;
 
 /**
  *
@@ -28,17 +30,21 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ItemJPA.findAll", query = "SELECT i FROM ItemJPA i WHERE i.codEmail = :codEmail")
     , @NamedQuery(name = "ItemJPA.deleteItem", query = "DELETE FROM ItemJPA i WHERE i.seqItem = :seqItem and i.codEmail = :codEmail")
     , @NamedQuery(name = "ItemJPA.findByNomItem", query = "SELECT i FROM ItemJPA i WHERE i.nomItem = :nomItem")
+    , @NamedQuery(name = "ItemJPA.findByIdItem", query = "SELECT i FROM ItemJPA i WHERE i.seqItem = :seqItem")
     , @NamedQuery(name = "ItemJPA.findByDesItem", query = "SELECT i FROM ItemJPA i WHERE i.desItem = :desItem")
     , @NamedQuery(name = "ItemJPA.findByDatItem", query = "SELECT i FROM ItemJPA i WHERE i.datItem = :datItem")
     , @NamedQuery(name = "ItemJPA.findByIdtItem", query = "SELECT i FROM ItemJPA i WHERE i.idtItem = :idtItem")
-    , @NamedQuery(name = "ItemJPA.findByIdtEstado", query = "SELECT i FROM ItemJPA i WHERE i.idtEstado = :idtEstado")})
+    , @NamedQuery(name = "ItemJPA.findByIdtEstado", query = "SELECT i FROM ItemJPA i WHERE i.idtEstado = :idtEstado")
+    , @NamedQuery(name = "ItemJPA.findIfItemAlreadyExistsToCreate", query = "SELECT i FROM ItemJPA i WHERE i.nomItem = :nomItem and i.idtItem = :idtItem and i.codEmail = :codEmail")
+    , @NamedQuery(name = "ItemJPA.findIfItemAlreadyExistsToUpdate", query = "SELECT i FROM ItemJPA i WHERE i.nomItem = :nomItem and i.idtItem = :idtItem and i.codEmail = :codEmail and i.seqItem <> :seqItem")})
+
 public class ItemJPA implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Basic(optional = false)
     @Column(name = "seq_item")
+    @Basic(optional = true)
     private Integer seqItem;
     @Basic(optional = false)
     @Column(name = "nom_item")

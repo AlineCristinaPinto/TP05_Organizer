@@ -43,7 +43,7 @@ public class UserDAOTest {
      */
     @Test
     public void testCreateUser() throws Exception {
-        /*
+        
         System.out.println("createUser");
         User user = new User();
         user.setCodEmail("abc@gmail.com");
@@ -58,7 +58,7 @@ public class UserDAOTest {
         boolean result = instance.createUser(user);
         System.out.println(result);
         assertEquals(expResult, result);
-        */
+        
     }
 
     /**
@@ -131,7 +131,7 @@ public class UserDAOTest {
     @Test
     public void testGetUserLogin() throws Exception {
         
-        System.out.println("getUserLogin");
+       /* System.out.println("getUserLogin");
         String email = "abc@gmail.com";
         String password = "cole";
         UserDAO instance = new UserDAO();
@@ -143,7 +143,7 @@ public class UserDAOTest {
         user.setUserPhoto(null);
         user.setCurrentTheme(1);
         User result = instance.getUserLogin(email, password);
-        assertEquals(user, result);
+        assertEquals(user, result);*/
 
     }
     
