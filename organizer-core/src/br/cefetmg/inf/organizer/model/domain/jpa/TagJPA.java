@@ -27,6 +27,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "tag", catalog = "organizer", schema = "public")
 @XmlRootElement
 @NamedQueries({
+    @NamedQuery(name = "TagJPA.readTag", query = "SELECT i FROM TagJPA i WHERE i.codEmail = :codEmail"),
+    @NamedQuery(name = "TagJPA.deleteTag", query = "SELECT i FROM TagJPA i WHERE i.codEmail = :codEmail"),
+    @NamedQuery(name = "TagJPA.findAll", query = "SELECT i FROM TagJPA i WHERE i.codEmail = :codEmail"),
     @NamedQuery(name = "TagJPA.getAll", query = "SELECT t FROM TagJPA t")
     , @NamedQuery(name = "TagJPA.getBySeqTag", query = "SELECT t FROM TagJPA t WHERE t.seqTag = :seqTag")
     , @NamedQuery(name = "TagJPA.getByNomTag", query = "SELECT t FROM TagJPA t WHERE t.nomTag = :nomTag")})
